@@ -69,23 +69,67 @@ const systemPrompt =
   "\n\n" +
   "{context}";
 
-const prompt = ChatPromptTemplate.fromMessages([
+
+import { createHistoryAwareRetriever } from 'langchain/chains/history_aware_retriever'
+import { MessagesPlaceholder } from '@langchain/core/prompts'
+
+const contextualizeQSystemPrompt =
+  "Given a chat history and the latest user question " +
+  "which might reference context in the chat history, " +
+  "formulate a standalone question which can be understood " +
+  "without the chat history. Do NOT answer the question, " +
+  "just reformulate it if needed and otherwise return it as is.";
+
+
+const contextualizeQPrompt = ChatPromptTemplate.fromMessages([
+    ["system", contextualizeQSystemPrompt],
+    new MessagesPlaceholder('chat_history'),
+    ["human", "{input}"] 
+])
+
+const historyAwareRetriever = await createHistoryAwareRetriever({
+    llm,
+    retriever,
+    rephrasePrompt: contextualizeQPrompt
+})
+
+
+const qaPrompt = ChatPromptTemplate.fromMessages([
     ["system", systemPrompt],
+    new MessagesPlaceholder('chat_history'),
     ["human", "{input}"]
 ])
 
-const qnachain = await createStuffDocumentsChain({
+const questionAnswerChain2 = await createStuffDocumentsChain({
     llm,
-    prompt
+    prompt: qaPrompt
 })
 
-const ragchain = await createRetrievalChain({
-    retriever,
-    combineDocsChain: qnachain
+const ragchain2 = await createRetrievalChain({
+    retriever: historyAwareRetriever,
+    combineDocsChain: questionAnswerChain2
 })
 
-const response = await ragchain.invoke({
-    input: "What is Task Decomposition?"
+
+import { HumanMessage, AIMessage } from '@langchain/core/messages'
+
+let chatHistory = []
+
+const question = "What is Task Decomposition?"
+const aiMsg1 = await ragchain2.invoke({
+    input: question,
+    chat_history: chatHistory
 })
 
-console.log(response.answer)
+chatHistory = chatHistory.concat([
+    new HumanMessage(question),
+    new AIMessage(aiMsg1.answer)
+])
+
+const secondQuestion = "What are common ways of doing it?"
+const aiMsg2 = await ragchain2.invoke({
+    input: secondQuestion,
+    chat_history: chatHistory
+})
+
+console.log(aiMsg2.answer)
