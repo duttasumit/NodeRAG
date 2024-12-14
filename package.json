@@ -17,6 +17,8 @@
     "@langchain/groq": "^0.1.2",
     "cheerio": "^1.0.0",
     "dotenv": "^16.4.7",
-    "langchain": "^0.3.7"
+    "langchain": "^0.3.7",
+    "pdf-parse": "^1.1.1",
+    "readline-sync": "^1.4.10"
   }
 }
