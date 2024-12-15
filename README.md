@@ -31,8 +31,8 @@ This repository contains a Node.js-based Retrieval-Augmented Generation (RAG) ap
 
 1. Clone the repository:
    ```
-   git clone https://github.com/yourusername/rag-app.git
-   cd rag-app
+   git clone https://github.com/duttasumit/NodeRAG.git
+   cd NodeRAG
    ```
 
 2. Install dependencies:
